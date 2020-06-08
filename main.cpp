@@ -25,12 +25,12 @@ struct Node{
 void addStudent(vector<Student*>*, int);
 void printStudent(vector<Student*>*, int);
 void deleteStudent(vector<Student*>*, int);
-int getHash(int, int);
+int hashKey(int, int);
 int getSize(Node*);
 
 int main() {
   //initialize vector pointer, keyword, and student struct
-  srand(time(NULL);
+  srand(time(NULL));
 	
   vector<char*> fnameList = new vector<char*>();
   vector<char*> lnameList = new vector<char*>();
@@ -38,8 +38,40 @@ int main() {
   char* keyword = new char[10];
   Student* student = new Student();
   int size = 100;
-  Node** hash = new Node*[size];
-	
+  Node** hashTable = new Node*[size];
+
+  for (int i=0; i < size; i++){
+    hashTable[i] = NULL;
+  }
+
+  char* fname = new char(20);
+  char* lname = new char(20);
+
+  char* fileName = new char(10);
+  
+  cout << "First Name File: " << endl;
+  cin.getline(fileName, 10, '\n');
+  ifstream fs (fnameFile);
+  cout << "Last Name File: " << endl;
+  cin.getline(fileName, 10, '\n');
+  if (!fs.is_open()){
+    cout << "Incorrect File Name." << endl;
+    return 0;
+  }
+  while (!fs.eof()){
+    fs >> fname;
+    fnameList.push_back(fname);
+  }
+  ifstream ls (lameFile);
+  if (!ls.is_open()){
+    cout << "Incorrect File Name." << endl;
+    return 0;
+  }
+  while (!ls.eof()){
+    ls >> lname;
+    lnameList.push_back(lname);
+  }
+
   bool stillPlaying = true;//will continue prompting for keyword until quit
   while(stillPlaying == true){
     cout << "Type in a keyword (\"ADD\", \"PRINT\",\"DELETE\", or \"QUIT\")"<<endl;
@@ -47,7 +79,7 @@ int main() {
     cin.clear(); //clear, ignore fixes null bug
     cin.ignore(9999, '\n');
     if (strcmp(keyword, "ADD") == 0){//if keyword char pointer matches with str
-      addStudent(&studentList);
+      addStudent();
     }
     else if (strcmp(keyword, "PRINT") == 0){
       printStudent(&studentList);
@@ -67,7 +99,25 @@ int main() {
   return 0;
 }
 
-void addStudent(vector<Student*>* studentList){ //prompts for user to input information about a student, then stores data inside the struct, adds to the vector
+int hashNumber(int n, int s, int t){
+  while (n != 0){
+    t = ((t*17)+(n%10))%s;
+    n = n/10;
+  }
+  t = (t*17)%s;
+  return t;
+}
+
+int getSize(Node* current){
+  int counter = 0;
+  while (current != NULL && current->student != NULL){
+    counter++;
+    current = current->next;
+  }
+  return counter;
+}
+
+void addStudent(int &number, Node**& hashTable, int &size){ //prompts for user to input information about a student, then stores data inside the struct, adds to the vector
   Student* student = new Student();
   int iid = 0;
   float igpa = 0.0;
@@ -93,32 +143,97 @@ void addStudent(vector<Student*>* studentList){ //prompts for user to input info
   student->gpa = igpa;
   cin.clear();//debugging, so it doesn't print header twice
   cin.ignore(999, '\n');
-  studentList->push_back(student);//add to vector
+  int hashKey = getHash(student->id, size);
+  bool check = false;
+  Node* first = hashTable[hashKey];
+  while (first != NULL && first->student != NULL){
+    if (first->student->id == student->id){
+      cout << "Enter valid ID." << endl;
+      return;
+    }
+    first = first->next;
+  }
+  if (check == true){
+    continue;
+  }
+  while (getSize(students[hashKey]) == 3){
+    int twicesize = size*2;
+    Node** newHashTable = new Node*[twicesize];
+    for (int i = 0; i < twicesize; i++){
+      newHashTable[i] = new Node();
+      newHashTable[i]->student = NULL;
+      newHashTable[i]->next = NULL;
+    }
+    for (int i = 0; i < size; i++){
+      Node* temp = hashTable[i];
+      while (temp != NULL && temp->student != NULL){
+	Node* node = new Node();
+	node->student = temp->student;
+	node->next = NULL;
+	int key = getHash(temp->student->id, twicesize);
+	if (newHashTable[key]->student == NULL){
+	  newHashTable[key] = node;
+	}
+	else{
+	  Node* current = hashTable[key];
+	  while (current->next != NULL){
+	    current = current->next;
+	  }
+	  current->next = node;
+	}
+	Node* toDelete = temp;
+	temp = temp->next;
+	delete toDelete;
+      }
+    }
+    size = twicesize;
+    Node** toDeleteHash = hashTable;
+    hashTable = newHashTable;
+    delete toDeleteHash;
+  }
+  if (hashTable[hashKey]->student == NULL) {
+    Node* node = new Node();
+    node->next = new Node();
+    node->student = student;
+    node->next->student = NULL;
+    hashTable[hashKey] = node;
+  }
+  else { // not first in list
+    Node* node = hashKey[hashKey];
+    while (node->next != NULL && node->next->student != NULL) {
+      node = node->next;
+    }
+    Node* n = new node();
+    n->next = new node();
+    n->student = student;
+    n->next->student = NULL;
+    node->next = n;
+  }
   cout << "Student added." << endl << endl;
 }
- 
-void printStudent(vector<Student*>* studentList) {//instead of a forloop with variable i, vectors use iterators
-  cout << "List of Students:" << endl << endl;
-  vector<Student*>::iterator it; //create iterator
-  for(it = studentList->begin(); it != studentList->end(); it++){// goes through each element of the vector
-    cout << (*it)->fname << " ";//for each iteration print out elements of struct
-     cout << (*it)->lname << ", ";
-     cout << (*it) -> id << ", ";
-     cout << fixed<<setprecision(2);//round to nearest hundreth for the gpa
-     cout << (*it)->gpa << endl;
 
+void printStudent(Node** hashTable, int size) {//instead of a forloop with variable i, vectors use iterators
+  cout << "List of Students:" << endl << endl;
+  for (int i = 0; i < size; i++){
+    Node* current = hashTable[i];
+    while (current != NULL && current->student != NULL){
+      Student* element = current->student;
+      cout << element->fname << " ";//for each iteration print out elements of struct
+      cout << element->lname << ", ";
+      cout << element->id << ", ";
+      cout << fixed<<setprecision(2);//round to nearest hundreth for the gpa
+      cout << element->gpa << endl;
+      current = current->next;
    }
-  cout << endl;
 }
 
 void deleteStudent(vector<Student*>* studentList){//if name matches user input in iteration, then delete element
-  vector<Student*>::iterator it;
   cout << "Enter the Student ID of the student to remove: ";
   int iid;
   cin >> iid;//take user input
-  int counter = 0;
-  for(it = studentList->begin(); it != studentList->end(); it++){//same as print
-    if ((*it)->id == iid){//if ints are the same
+  int hashKey = getHash(iid, size);
+  if
+  if ((*it)->id == iid){//if ints are the same
       delete *it;//delete memory
       studentList->erase(it);//remove from it
       counter++;//add 1
