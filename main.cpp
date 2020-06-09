@@ -8,7 +8,7 @@
 #include <iterator>
 using namespace std;
 
-/*Date: 6/7/2020 Author: Maggie Bao. Description: In this program, students were stored using a data structure called a hash table. The program prompts the user to add, delete, and print out students.*/
+/*Date: 6/7/2020 Author: Maggie Bao. Description: In this program, students were stored using a data structure called a hash table. The program prompts the user to add, delete, and print out students. Help from Joyce Chen.*/
 
 
 struct Student{//student structure
