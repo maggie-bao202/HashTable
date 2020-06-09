@@ -1,10 +1,10 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
-#include<iterator>
 #include<iomanip>
 #include <stdlib.h>
-
+#include <fstream>
+#include <math.h>
 using namespace std;
 
 /*Date: 6/7/2020 Author: Maggie Bao.*/
@@ -22,18 +22,18 @@ struct Node{
   Node* next;
 };
 
-void addStudent(vector<Student*>*, int);
-void printStudent(vector<Student*>*, int);
-void deleteStudent(vector<Student*>*, int);
-int hashKey(int, int);
+void addStudent(Node** &, int&);
+void printStudent(Node**, int);
+void deleteStudent(Node** &, int&);
+int getHashKey(int, int, int);
 int getSize(Node*);
 
 int main() {
   //initialize vector pointer, keyword, and student struct
   srand(time(NULL));
 	
-  vector<char*> fnameList = new vector<char*>();
-  vector<char*> lnameList = new vector<char*>();
+  vector<char*>* fnameList = new vector<char*>();
+  vector<char*>* lnameList = new vector<char*>();
   
   char* keyword = new char[10];
   Student* student = new Student();
@@ -41,51 +41,54 @@ int main() {
   Node** hashTable = new Node*[size];
 
   for (int i=0; i < size; i++){
-    hashTable[i] = NULL;
+    hashTable[i] = new Node();
+    hashTable[i]->student = NULL;
+    hashTable[i]->next = NULL;
   }
-
-  char* fname = new char(20);
-  char* lname = new char(20);
-
-  char* fileName = new char(10);
   
+  char* fileName = new char(10);
   cout << "First Name File: " << endl;
   cin.getline(fileName, 10, '\n');
-  ifstream fs (fnameFile);
-  cout << "Last Name File: " << endl;
-  cin.getline(fileName, 10, '\n');
+  ifstream fs(fileName);
   if (!fs.is_open()){
     cout << "Incorrect File Name." << endl;
     return 0;
   }
+  char* fname = new char(20);
   while (!fs.eof()){
     fs >> fname;
-    fnameList.push_back(fname);
+    fnameList->push_back(fname);
   }
-  ifstream ls (lameFile);
+  cout << "Last Name File: " << endl;
+  cin.getline(fileName, 10, '\n');
+  ifstream ls(fileName);
   if (!ls.is_open()){
     cout << "Incorrect File Name." << endl;
     return 0;
   }
+  char* lname = new char(20);
   while (!ls.eof()){
     ls >> lname;
-    lnameList.push_back(lname);
+    lnameList->push_back(lname);
   }
 
   bool stillPlaying = true;//will continue prompting for keyword until quit
   while(stillPlaying == true){
-    cout << "Type in a keyword (\"ADD\", \"PRINT\",\"DELETE\", or \"QUIT\")"<<endl;
+    cout << "Type in a keyword (\"MANUAL\" ADD, \"RANDOM\" ADD, \"PRINT\",\"DELETE\", or \"QUIT\")"<<endl;
     cin.get(keyword, 10); //put into array of 10. Extra char will be ignored
     cin.clear(); //clear, ignore fixes null bug
     cin.ignore(9999, '\n');
-    if (strcmp(keyword, "ADD") == 0){//if keyword char pointer matches with str
-      addStudent();
+    if (strcmp(keyword, "MANUAL") == 0){//if keyword char pointer matches with str
+      addStudent(hashTable, size);
+    }
+    else if (strcmp(keyword, "RANDOM") == 0){
+
     }
     else if (strcmp(keyword, "PRINT") == 0){
-      printStudent(&studentList);
+      printStudent(hashTable, size);
     }
     else if (strcmp(keyword, "DELETE") == 0){
-      deleteStudent(&studentList);
+      deleteStudent(hashTable, size);
     }
     else if(strcmp(keyword, "QUIT") == 0){
       cout << "Have a nice day!" << endl;
@@ -99,7 +102,7 @@ int main() {
   return 0;
 }
 
-int hashNumber(int n, int s, int t){
+int getHashKey(int n, int s, int t){
   while (n != 0){
     t = ((t*17)+(n%10))%s;
     n = n/10;
@@ -117,7 +120,7 @@ int getSize(Node* current){
   return counter;
 }
 
-void addStudent(int &number, Node**& hashTable, int &size){ //prompts for user to input information about a student, then stores data inside the struct, adds to the vector
+void addStudent(Node**& hashTable, int &size){ //prompts for user to input information about a student, then stores data inside the struct, adds to the vector
   Student* student = new Student();
   int iid = 0;
   float igpa = 0.0;
@@ -143,20 +146,8 @@ void addStudent(int &number, Node**& hashTable, int &size){ //prompts for user t
   student->gpa = igpa;
   cin.clear();//debugging, so it doesn't print header twice
   cin.ignore(999, '\n');
-  int hashKey = getHash(student->id, size);
-  bool check = false;
-  Node* first = hashTable[hashKey];
-  while (first != NULL && first->student != NULL){
-    if (first->student->id == student->id){
-      cout << "Enter valid ID." << endl;
-      return;
-    }
-    first = first->next;
-  }
-  if (check == true){
-    continue;
-  }
-  while (getSize(students[hashKey]) == 3){
+  //int hashKey = getHashKey(student->id, size, 0);
+  while (getSize(hashTable[getHashKey(student->id, size, 0)]) == 3){
     int twicesize = size*2;
     Node** newHashTable = new Node*[twicesize];
     for (int i = 0; i < twicesize; i++){
@@ -164,18 +155,19 @@ void addStudent(int &number, Node**& hashTable, int &size){ //prompts for user t
       newHashTable[i]->student = NULL;
       newHashTable[i]->next = NULL;
     }
-    for (int i = 0; i < size; i++){
+    for (int i = 0; i < size; i++){//rehash
       Node* temp = hashTable[i];
-      while (temp != NULL && temp->student != NULL){
+      while (temp->student != NULL){
 	Node* node = new Node();
 	node->student = temp->student;
 	node->next = NULL;
-	int key = getHash(temp->student->id, twicesize);
-	if (newHashTable[key]->student == NULL){
-	  newHashTable[key] = node;
+	//int key = getHashKey(temp->student->id, twicesize, 0);
+	//cout << "KEY:" << key << endl;
+	if (newHashTable[getHashKey(temp->student->id, twicesize, 0)]->student == NULL){
+	  newHashTable[getHashKey(temp->student->id, twicesize, 0)] = node;
 	}
 	else{
-	  Node* current = hashTable[key];
+	  Node* current = hashTable[getHashKey(temp->student->id, twicesize, 0)];
 	  while (current->next != NULL){
 	    current = current->next;
 	  }
@@ -186,64 +178,70 @@ void addStudent(int &number, Node**& hashTable, int &size){ //prompts for user t
 	delete toDelete;
       }
     }
-    size = twicesize;
-    Node** toDeleteHash = hashTable;
+    delete[] hashTable;
     hashTable = newHashTable;
-    delete toDeleteHash;
+    size = twicesize;
   }
-  if (hashTable[hashKey]->student == NULL) {
+  if (hashTable[getHashKey(student->id, size, 0)]->student == NULL) {//first in list
     Node* node = new Node();
-    node->next = new Node();
     node->student = student;
+    node->next = new Node();
     node->next->student = NULL;
-    hashTable[hashKey] = node;
+    hashTable[getHashKey(student->id, size, 0)] = node;
   }
   else { // not first in list
-    Node* node = hashKey[hashKey];
+    Node* node = hashTable[getHashKey(student->id, size, 0)];
     while (node->next != NULL && node->next->student != NULL) {
       node = node->next;
     }
-    Node* n = new node();
-    n->next = new node();
+    Node* n = new Node();
     n->student = student;
+    n->next = new Node();
     n->next->student = NULL;
     node->next = n;
   }
+  cout << "KEY:" << getHashKey(student->id, size, 0) << endl;
   cout << "Student added." << endl << endl;
 }
 
-void printStudent(Node** hashTable, int size) {//instead of a forloop with variable i, vectors use iterators
-  cout << "List of Students:" << endl << endl;
-  for (int i = 0; i < size; i++){
-    Node* current = hashTable[i];
-    while (current != NULL && current->student != NULL){
-      Student* element = current->student;
-      cout << element->fname << " ";//for each iteration print out elements of struct
-      cout << element->lname << ", ";
-      cout << element->id << ", ";
-      cout << fixed<<setprecision(2);//round to nearest hundreth for the gpa
-      cout << element->gpa << endl;
-      current = current->next;
-   }
-}
 
-void deleteStudent(vector<Student*>* studentList){//if name matches user input in iteration, then delete element
-  cout << "Enter the Student ID of the student to remove: ";
-  int iid;
-  cin >> iid;//take user input
-  int hashKey = getHash(iid, size);
-  if
-  if ((*it)->id == iid){//if ints are the same
-      delete *it;//delete memory
-      studentList->erase(it);//remove from it
-      counter++;//add 1
-      cout << "Student removed." << endl << endl;
-      break;
+ 
+void printStudent(Node** hashTable, int size) {//instead of a forloop with variable i, vectors use iterators
+  cout << "List of Students:" << endl;
+  for (int i = 0; i < size; i++){
+    Node* element = hashTable[i];
+    while (element != NULL && element->student != NULL){
+      cout << element->student->fname << " ";//for each iteration print out elements of struct
+      cout << element->student->lname << ", ";
+      cout << element->student->id << ", ";
+      cout << fixed<<setprecision(2);//round to nearest hundreth for the gpa
+      cout << element->student->gpa << endl;
+      element = element->next;
     }
   }
-  if (counter == 0){//if counter did not iterate
-    cout << "Not a valid student." << endl << endl;
+  cout << endl;
+}
+
+void deleteStudent(Node** &hashTable, int &size){
+  int iid = 0;
+  cout << "Enter ID: " << endl;
+  cin >> iid;
+  int hashKey = getHashKey(iid, size, 0);
+  if (iid != hashTable[hashKey]->student->id){
+    Node* current = hashTable[hashKey];
+    while (iid != current->next->student->id){
+      current = current->next;
+    }
+    Node* toDelete = current->next;
+    current->next = toDelete->next;
+    delete toDelete;
   }
+  else{
+    Node* toDelete = hashTable[hashKey];
+    hashTable[hashKey] = hashTable[hashKey]->next;
+    delete toDelete;
+  }
+  cout << "Student Deleted." << endl;
   cin.clear();//debugging to make header not print twice
   cin.ignore(999,'\n');
 }
