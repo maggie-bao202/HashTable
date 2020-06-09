@@ -28,7 +28,7 @@ void printStudent(Node**, int);
 void deleteStudent(Node** &, int&);
 int getHashKey(int, int, int);
 int getSize(Node*);
-void randomAdd(Node** &, int &, vector<char*>*, vector<char*>*);
+void randomAdd(Node** &, int&, int &, vector<char*>*, vector<char*>*);
 
 int main() {
   //initialize vector pointer, keyword, and student struct
@@ -39,6 +39,7 @@ int main() {
   char* keyword = new char[10];
   Student* student = new Student();
   int size = 100;
+  int n = 1;
   Node** hashTable = new Node*[size];
   for (int i=0; i < size; i++){//set elements of hashtable to null
     hashTable[i] = new Node();
@@ -81,7 +82,7 @@ int main() {
       addStudent(hashTable, size);
     }
     else if (strcmp(keyword, "RANDOM") == 0){
-      randomAdd(hashTable, size, fnameList, lnameList);
+      randomAdd(hashTable, n, size, fnameList, lnameList);
     }
     else if (strcmp(keyword, "PRINT") == 0){
       printStudent(hashTable, size);
@@ -313,16 +314,16 @@ void deleteStudent(Node** &hashTable, int &size){
   cout << "Enter ID: " << endl;
   cin >> iid;
   int hashKey = getHashKey(iid, size, 0);
-  if (iid != hashTable[hashKey]->student->id){
+  if (iid != hashTable[hashKey]->student->id){//if id is not in hash table
     Node* current = hashTable[hashKey];
-    while (iid != current->next->student->id){
+    while (iid != current->next->student->id){//traverse linked list
       current = current->next;
     }
-    Node* toDelete = current->next;
+    Node* toDelete = current->next;//delete
     current->next = toDelete->next;
     delete toDelete;
   }
-  else{
+  else{//if in hash table
     Node* toDelete = hashTable[hashKey];
     hashTable[hashKey] = hashTable[hashKey]->next;
     delete toDelete;
