@@ -28,7 +28,7 @@ void printStudent(Node**, int);
 void deleteStudent(Node** &, int&);
 int getHashKey(int, int, int);
 int getSize(Node*);
-void randomAdd(Node** &, int&, int &, vector<char*>*, vector<char*>*);
+void randomAdd(Node** &, int &, int &, vector<char*>*, vector<char*>*);
 
 int main() {
   //initialize vector pointer, keyword, and student struct
@@ -203,7 +203,7 @@ void addStudent(Node**& hashTable, int &size){ //prompts for user to input infor
   cout << "Student added." << endl << endl;
 }
 
-void randomAdd(Node** &hashTable, int *&n, int &size, vector<char*>* fnameList, vector<char*>* lnameList){
+void randomAdd(Node** &hashTable, int &n, int &size, vector<char*>* fnameList, vector<char*>* lnameList){
   int num = 0;
   int newid = 100000;
   cout << "Number of Students: " << endl;
